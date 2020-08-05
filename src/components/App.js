@@ -1,51 +1,60 @@
-import React, { Component } from 'react'
-import { BrowserRouter as Router, Switch, Route } from 'react-router-dom'
+import React, { useEffect, useState } from 'react'
+import { Router, Switch, Route } from 'react-router-dom'
+import axios from 'axios'
+import { useAuth0 } from '@auth0/auth0-react'
+import history from '../history'
 import Navigation from './Navigation'
 import Jumbotron from './Jumbotron'
 import Feed from './Feed'
 import Contact from './Contact'
 import About from './About'
-import data from '../data/data.json'
 import './App.css'
+import Loading from './Loading'
 
-class App extends Component {
-  constructor (props) {
-    super(props)
-    this.state = {
-      name: 'Manny Henri',
-      jumbotronTitle: 'List of courses',
-      feeds: []
-    }
-  }
+function App () {
+  const [name, setName] = useState('Manny Henri')
+  const [jumbotronTitle, setJumbotronTitle] = useState('List of courses')
+  const [feeds, setFeeds] = useState([])
+  const { loading } = useAuth0()
 
-  UNSAFE_componentWillMount () {
-    this.setState({
-      feeds: data
-    })
-  }
+  useEffect(() => {
+    console.log('Fetch')
 
-  render () {
-    return (
-      <Router>
-        <div className='container'>
-          <Navigation />
-          <Jumbotron title={this.state.jumbotronTitle} />
-          <Switch>
-            <Route path='/contact' component={Contact} />
-            <Route path='/about' component={About} />
-            <Route
-              exact path='/' render={(props) => (
-                <Feed feeds={this.state.feeds} />
-              )}
-            />
-          </Switch>
-          <div className='footer'>
-            <p>&copy; {this.state.name} Inc.</p>
-          </div>
-        </div>
-      </Router>
-    )
-  }
+    axios.get('http://localhost:4000/courses')
+      .then(res => {
+        console.log(res)
+        setFeeds(res.data)
+      })
+      .catch(err => {
+        console.log(err)
+      })
+  }, [])
+
+  return (
+    <div>
+      {
+        loading ? <Loading />
+          : <Router history={history}>
+            <div className='container'>
+              <Navigation />
+              <Jumbotron title={jumbotronTitle} />
+              <Switch>
+                <Route path='/contact' component={Contact} />
+                <Route path='/about' component={About} />
+                <Route
+                  exact path='/' render={() => (
+                    <Feed feeds={feeds} />
+                  )}
+                />
+              </Switch>
+              <div className='footer'>
+                <p>&copy; {name} Inc.</p>
+              </div>
+            </div>
+          </Router>
+      }
+    </div>
+  )
 }
 
 export default App
